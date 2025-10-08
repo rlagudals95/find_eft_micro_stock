@@ -2,6 +2,7 @@ import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EtfDto, HoldingDto } from './dto/etf.dto';
 import { EtfService } from './etf.service';
+import { EtfSymbol } from './type/symbol';
 
 @ApiTags('etf')
 @Controller('etf')
@@ -24,8 +25,8 @@ export class EtfController {
   @ApiOperation({ summary: '특정 ETF 상세 정보 조회' })
   @ApiParam({ name: 'symbol', example: 'ARKK' })
   @ApiResponse({ status: 200, description: 'ETF 상세 정보', type: EtfDto })
-  async getEtf(@Param('symbol') symbol: string) {
-    const data = await this.etfService.getEtfOverview(symbol.toUpperCase());
+  async getEtf(@Param('symbol') symbol: EtfSymbol) {
+    const data = await this.etfService.getEtfOverview(symbol);
     return {
       success: true,
       data,
@@ -36,8 +37,8 @@ export class EtfController {
   @ApiOperation({ summary: '특정 ETF의 보유 종목 조회' })
   @ApiParam({ name: 'symbol', example: 'ARKK' })
   @ApiResponse({ status: 200, description: '보유 종목 목록', type: [HoldingDto] })
-  async getEtfHoldings(@Param('symbol') symbol: string) {
-    const data = await this.etfService.getEtfHoldings(symbol.toUpperCase());
+  async getEtfHoldings(@Param('symbol') symbol: EtfSymbol) {
+    const data = await this.etfService.getEtfHoldings(symbol);
     return {
       success: true,
       data,

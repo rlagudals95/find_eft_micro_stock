@@ -1,0 +1,1 @@
+export type EtfSymbol = 'ARKK' | 'IVES' | 'GRNY' | 'AOTG';

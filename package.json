@@ -13,10 +13,19 @@
     "start": "cd backend && npm start",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
   },
-  "keywords": ["etf", "stock-analysis", "growth-stocks", "investment"],
+  "keywords": [
+    "etf",
+    "stock-analysis",
+    "growth-stocks",
+    "investment"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@types/csv-parse": "^1.2.5",
+    "csv-parse": "^6.1.0"
   }
 }

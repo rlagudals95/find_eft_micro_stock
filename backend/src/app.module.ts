@@ -4,7 +4,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AnalysisModule } from './analysis/analysis.module';
 import { EtfModule } from './etf/etf.module';
 import { HealthController } from './health/health.controller';
-import { HiddenGemsModule } from './hidden-gems/hidden-gems.module';
 
 @Module({
   imports: [
@@ -14,7 +13,6 @@ import { HiddenGemsModule } from './hidden-gems/hidden-gems.module';
     }),
     ScheduleModule.forRoot(),
     EtfModule,
-    HiddenGemsModule,
     AnalysisModule,
   ],
   controllers: [HealthController],

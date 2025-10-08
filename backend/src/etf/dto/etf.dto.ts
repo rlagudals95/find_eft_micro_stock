@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDateString, IsNumber, IsString } from 'class-validator';
+import { EtfSymbol } from '../type/symbol';
 
 export class EtfDto {
   @ApiProperty({ example: 'ARKK', description: 'ETF 심볼' })
@@ -8,7 +9,7 @@ export class EtfDto {
 
   @ApiProperty({ example: 'ARKK', description: 'ETF 심볼' })
   @IsString()
-  symbol: string;
+  symbol: EtfSymbol;
 
   @ApiProperty({ example: 'ARK Innovation ETF', description: 'ETF 이름' })
   @IsString()
