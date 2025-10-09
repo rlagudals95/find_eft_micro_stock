@@ -1,13 +1,13 @@
+import { TrendingUp } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Star, TrendingUp } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const location = useLocation();
 
-  const navItems = [
-    { path: '/', label: '숨은 보석', icon: Star },
-    { path: '/etfs', label: 'ETF 목록', icon: TrendingUp },
+  const navItems: { path: string; label: string; icon: React.ElementType }[] = [
+    // { path: '/', label: '숨은 보석', icon: Star },
+    // { path: '/etfs', label: 'ETF 목록', icon: TrendingUp },
   ];
 
   return (
