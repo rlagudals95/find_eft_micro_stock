@@ -41,6 +41,13 @@ export interface Holding {
   lastUpdated: string;
 }
 
+export interface ETFWithHoldings {
+  symbol: string;
+  name: string;
+  expenseRatio: number;
+  holdings: Holding[];
+}
+
 export interface StockData {
   symbol: string;
   name: string;
@@ -104,6 +111,12 @@ export const etfApi = {
   // 특정 ETF의 보유 종목 조회
   getETFHoldings: async (symbol: string): Promise<ApiResponse<Holding[]>> => {
     const response = await api.get(`/etf/${symbol}/holdings`);
+    return response.data;
+  },
+
+  // 모든 ETF의 보유 종목 한 번에 조회
+  getAllETFsWithHoldings: async (): Promise<ApiResponse<ETFWithHoldings[]>> => {
+    const response = await api.get('/etf/all-holdings');
     return response.data;
   },
 

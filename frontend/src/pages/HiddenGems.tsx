@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Search, TrendingUp, Eye, Star, Filter, AlertCircle } from 'lucide-react';
-import { etfApi, Holding } from '../services/api';
+import { AlertCircle, Eye, Filter, Search, Star, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { etfApi, Holding } from '../services/api';
 
 interface HiddenGem extends Holding {
   etfSymbol: string;
@@ -12,17 +12,11 @@ interface HiddenGem extends Holding {
 
 export const HiddenGems: React.FC = () => {
   const [hiddenGems, setHiddenGems] = useState<HiddenGem[]>([]);
+  const [allEtfData, setAllEtfData] = useState<Array<{symbol: string; name: string}>>([]);
   const [loading, setLoading] = useState(true);
   const [selectedETF, setSelectedETF] = useState<string>('all');
   const [minWeight, setMinWeight] = useState(0.1);
   const [maxWeight, setMaxWeight] = useState(2.0);
-
-  const ETF_LIST = [
-    { symbol: 'ARKK', name: 'ARK Innovation ETF' },
-    { symbol: 'IVES', name: 'Dan IVES AI Revolution ETF' },
-    { symbol: 'GRNY', name: 'Fundstrat Granny Shots ETF' },
-    { symbol: 'AOTG', name: 'AOT 성장 및 혁신 ETF' }
-  ];
 
   useEffect(() => {
     fetchHiddenGems();
@@ -31,39 +25,42 @@ export const HiddenGems: React.FC = () => {
   const fetchHiddenGems = async () => {
     try {
       setLoading(true);
+      
+      // 모든 ETF 데이터를 한 번에 가져오기
+      const response = await etfApi.getAllETFsWithHoldings();
+      const allEtfsData = response.data;
+
+      // ETF 목록 저장 (select 옵션용)
+      setAllEtfData(allEtfsData.map(etf => ({ symbol: etf.symbol, name: etf.name })));
+
+      // 선택된 ETF에 따라 필터링
+      const filteredEtfs = selectedETF === 'all' 
+        ? allEtfsData 
+        : allEtfsData.filter(etf => etf.symbol === selectedETF);
+
+      // 모든 ETF의 숨은 보석 추출
       const gems: HiddenGem[] = [];
+      
+      filteredEtfs.forEach(etf => {
+        // 소량 보유 종목 필터링 (하위 종목)
+        const smallHoldings = etf.holdings
+          .filter(h => h.weight >= minWeight && h.weight <= maxWeight)
+          .sort((a, b) => a.weight - b.weight) // 작은 비중부터
+          .slice(0, 20); // 상위 20개
 
-      const etfsToFetch = selectedETF === 'all' 
-        ? ETF_LIST 
-        : ETF_LIST.filter(etf => etf.symbol === selectedETF);
+        smallHoldings.forEach(holding => {
+          const potentialScore = calculatePotentialScore(holding);
+          const reason = getInvestmentReason(holding);
 
-      for (const etf of etfsToFetch) {
-        try {
-          const response = await etfApi.getETFHoldings(etf.symbol);
-          const holdings = response.data;
-
-          // 소량 보유 종목 필터링 (하위 종목)
-          const smallHoldings = holdings
-            .filter(h => h.weight >= minWeight && h.weight <= maxWeight)
-            .sort((a, b) => a.weight - b.weight) // 작은 비중부터
-            .slice(0, 20); // 상위 20개
-
-          smallHoldings.forEach(holding => {
-            const potentialScore = calculatePotentialScore(holding);
-            const reason = getInvestmentReason(holding);
-
-            gems.push({
-              ...holding,
-              etfSymbol: etf.symbol,
-              etfName: etf.name,
-              reason,
-              potentialScore
-            });
+          gems.push({
+            ...holding,
+            etfSymbol: etf.symbol,
+            etfName: etf.name,
+            reason,
+            potentialScore
           });
-        } catch (error) {
-          console.error(`Error fetching ${etf.symbol}:`, error);
-        }
-      }
+        });
+      });
 
       // 잠재력 점수순으로 정렬
       gems.sort((a, b) => b.potentialScore - a.potentialScore);
@@ -146,7 +143,7 @@ export const HiddenGems: React.FC = () => {
               className="w-full border border-gray-300 rounded-lg px-3 py-2"
             >
               <option value="all">전체 ETF</option>
-              {ETF_LIST.map(etf => (
+              {allEtfData.map(etf => (
                 <option key={etf.symbol} value={etf.symbol}>
                   {etf.symbol} - {etf.name}
                 </option>

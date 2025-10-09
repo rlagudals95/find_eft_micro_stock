@@ -1,6 +1,6 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { EtfDto, HoldingDto } from './dto/etf.dto';
+import { EtfDto, EtfWithHoldingsDto, HoldingDto } from './dto/etf.dto';
 import { EtfService } from './etf.service';
 import { EtfSymbol } from './type/symbol';
 
@@ -14,6 +14,18 @@ export class EtfController {
   @ApiResponse({ status: 200, description: 'ETF 목록', type: [EtfDto] })
   async getAllEtfs() {
     const data = await this.etfService.getAllEtfs();
+    return {
+      success: true,
+      data,
+      count: data.length,
+    };
+  }
+
+  @Get('all-holdings')
+  @ApiOperation({ summary: '모든 ETF의 보유 종목 한 번에 조회' })
+  @ApiResponse({ status: 200, description: '모든 ETF와 보유 종목', type: [EtfWithHoldingsDto] })
+  async getAllEtfsWithHoldings() {
+    const data = await this.etfService.getAllEtfsWithHoldings();
     return {
       success: true,
       data,

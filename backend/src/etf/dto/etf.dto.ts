@@ -69,3 +69,20 @@ export class HoldingDto {
   @IsDateString()
   lastUpdated: string;
 }
+
+export class EtfWithHoldingsDto {
+  @ApiProperty({ example: 'ARKK', description: 'ETF 심볼' })
+  @IsString()
+  symbol: EtfSymbol;
+
+  @ApiProperty({ example: 'ARK Innovation ETF', description: 'ETF 이름' })
+  @IsString()
+  name: string;
+
+  @ApiProperty({ example: 0.75, description: '수수료 비율 (%)' })
+  @IsNumber()
+  expenseRatio: number;
+
+  @ApiProperty({ type: [HoldingDto], description: '보유 종목 목록' })
+  holdings: HoldingDto[];
+}

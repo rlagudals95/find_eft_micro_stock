@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { parse } from 'csv-parse/sync';
-import { EtfDto, HoldingDto } from './dto/etf.dto';
+import { EtfDto, EtfWithHoldingsDto, HoldingDto } from './dto/etf.dto';
 import { EtfSymbol } from './type/symbol';
 
 interface EtfHolding {
@@ -94,6 +94,29 @@ export class EtfService {
       marketValue: holding.marketValue,
       lastUpdated: new Date().toISOString(),
     }));
+  }
+
+  async getAllEtfsWithHoldings(): Promise<EtfWithHoldingsDto[]> {
+    const etfSymbols = Object.keys(this.ETF_CONFIGS) as EtfSymbol[];
+    const results: EtfWithHoldingsDto[] = [];
+
+    for (const symbol of etfSymbols) {
+      try {
+        const config = this.ETF_CONFIGS[symbol];
+        const holdings = await this.getEtfHoldings(symbol);
+
+        results.push({
+          symbol: symbol,
+          name: config.name,
+          expenseRatio: config.expenseRatio,
+          holdings: holdings,
+        });
+      } catch (error) {
+        this.logger.error(`Error fetching holdings for ${symbol}:`, error);
+      }
+    }
+
+    return results;
   }
 
   async fetchEtfHoldings(symbol: EtfSymbol): Promise<EtfHolding[]> {
