@@ -1,7 +1,9 @@
 import { AlertCircle, Eye, Filter, Search, Star, TrendingUp } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { etfApi, Holding } from '../services/api';
+import { useETFsWithHoldings } from '../hooks/useETFsWithHoldings';
+import { Holding } from '../services/api';
 
 interface HiddenGem extends Holding {
   etfSymbol: string;
@@ -11,73 +13,13 @@ interface HiddenGem extends Holding {
 }
 
 export const HiddenGems: React.FC = () => {
-  const [hiddenGems, setHiddenGems] = useState<HiddenGem[]>([]);
-  const [allEtfData, setAllEtfData] = useState<Array<{symbol: string; name: string; holdings: Holding[]}>>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const [selectedETF, setSelectedETF] = useState<string>('all');
   const [minWeight, setMinWeight] = useState(0.1);
   const [maxWeight, setMaxWeight] = useState(1.0);
 
-  // 초기 데이터 로드 (한 번만)
-  useEffect(() => {
-    fetchAllData();
-  }, []);
-
-  // 필터 조건이 바뀔 때마다 클라이언트에서 필터링
-  useEffect(() => {
-    if (allEtfData.length > 0) {
-      filterHiddenGems();
-    }
-  }, [allEtfData, selectedETF, minWeight, maxWeight]);
-
-  // 서버에서 모든 ETF 데이터를 한 번만 가져오기
-  const fetchAllData = async () => {
-    try {
-      setLoading(true);
-      const response = await etfApi.getAllETFsWithHoldings();
-      setAllEtfData(response.data);
-    } catch (error) {
-      console.error('Error fetching ETF data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 클라이언트에서 필터링 수행 (서버 재호출 없음)
-  const filterHiddenGems = () => {
-    // 선택된 ETF에 따라 필터링
-    const filteredEtfs = selectedETF === 'all' 
-      ? allEtfData 
-      : allEtfData.filter(etf => etf.symbol === selectedETF);
-
-    // 모든 ETF의 숨은 보석 추출
-    const gems: HiddenGem[] = [];
-    
-    filteredEtfs.forEach(etf => {
-      // 소량 보유 종목 필터링 (하위 종목)
-      const smallHoldings = etf.holdings
-        .filter(h => h.weight >= minWeight && h.weight <= maxWeight)
-        .sort((a, b) => a.weight - b.weight) // 작은 비중부터
-        .slice(0, 20); // 상위 20개
-
-      smallHoldings.forEach(holding => {
-        const potentialScore = calculatePotentialScore(holding);
-        const reason = getInvestmentReason(holding);
-
-        gems.push({
-          ...holding,
-          etfSymbol: etf.symbol,
-          etfName: etf.name,
-          reason,
-          potentialScore
-        });
-      });
-    });
-
-    // 잠재력 점수순으로 정렬
-    gems.sort((a, b) => b.potentialScore - a.potentialScore);
-    setHiddenGems(gems);
-  };
+  // React Query로 데이터 가져오기 (자동 캐싱)
+  const { data: allEtfData, isLoading } = useETFsWithHoldings();
 
   const calculatePotentialScore = (holding: Holding): number => {
     let score = 0;
@@ -108,7 +50,44 @@ export const HiddenGems: React.FC = () => {
     }
   };
 
-  if (loading) {
+  // useMemo로 필터링 로직 최적화 (allEtfData, selectedETF, minWeight, maxWeight가 변경될 때만 재계산)
+  const hiddenGems = useMemo(() => {
+    if (!allEtfData) return [];
+
+    // 선택된 ETF에 따라 필터링
+    const filteredEtfs = selectedETF === 'all' 
+      ? allEtfData 
+      : allEtfData.filter(etf => etf.symbol === selectedETF);
+
+    // 모든 ETF의 숨은 보석 추출
+    const gems: HiddenGem[] = [];
+    
+    filteredEtfs.forEach(etf => {
+      // 소량 보유 종목 필터링 (하위 종목)
+      const smallHoldings = etf.holdings
+        .filter(h => h.weight >= minWeight && h.weight <= maxWeight)
+        .sort((a, b) => a.weight - b.weight) // 작은 비중부터
+        .slice(0, 20); // 상위 20개
+
+      smallHoldings.forEach(holding => {
+        const potentialScore = calculatePotentialScore(holding);
+        const reason = getInvestmentReason(holding);
+
+        gems.push({
+          ...holding,
+          etfSymbol: etf.symbol,
+          etfName: etf.name,
+          reason,
+          potentialScore
+        });
+      });
+    });
+
+    // 잠재력 점수순으로 정렬
+    return gems.sort((a, b) => b.potentialScore - a.potentialScore);
+  }, [allEtfData, selectedETF, minWeight, maxWeight]);
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner size="lg" text="숨은 보석을 찾는 중..." />
@@ -150,7 +129,7 @@ export const HiddenGems: React.FC = () => {
               className="w-full border border-gray-300 rounded-lg px-3 py-2"
             >
               <option value="all">전체 ETF</option>
-              {allEtfData.map(etf => (
+              {allEtfData?.map(etf => (
                 <option key={etf.symbol} value={etf.symbol}>
                   {etf.symbol} - {etf.name}
                 </option>
@@ -219,7 +198,11 @@ export const HiddenGems: React.FC = () => {
       {/* 숨은 보석 목록 */}
       <div className="space-y-4">
         {hiddenGems.map((gem, index) => (
-          <div key={`${gem.etfSymbol}-${gem.symbol}`} className="card hover:shadow-lg transition-shadow">
+          <div 
+            key={`${gem.etfSymbol}-${gem.symbol}`} 
+            className="card hover:shadow-lg transition-all cursor-pointer hover:scale-[1.01]"
+            onClick={() => navigate(`/stock/${gem.symbol}`)}
+          >
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-4 flex-1">
                 <div className="flex-shrink-0">
@@ -230,7 +213,9 @@ export const HiddenGems: React.FC = () => {
 
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-xl font-bold text-gray-900">{gem.symbol}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 hover:text-primary-600 transition-colors">
+                      {gem.symbol} 📊
+                    </h3>
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
                       {gem.etfSymbol}
                     </span>

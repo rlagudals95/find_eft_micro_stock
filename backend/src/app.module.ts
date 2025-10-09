@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AnalysisModule } from './analysis/analysis.module';
 import { EtfModule } from './etf/etf.module';
 import { HealthController } from './health/health.controller';
+import { StockModule } from './stock/stock.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { HealthController } from './health/health.controller';
     }),
     ScheduleModule.forRoot(),
     EtfModule,
+    StockModule,
     AnalysisModule,
   ],
   controllers: [HealthController],

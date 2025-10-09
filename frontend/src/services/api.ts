@@ -48,6 +48,77 @@ export interface ETFWithHoldings {
   holdings: Holding[];
 }
 
+// Stock 분석 관련 타입
+export enum InvestmentRecommendation {
+  STRONG_BUY = 'STRONG_BUY',
+  BUY = 'BUY',
+  HOLD = 'HOLD',
+  SELL = 'SELL',
+  STRONG_SELL = 'STRONG_SELL',
+}
+
+export interface BasicInfo {
+  symbol: string;
+  name: string;
+  price: number;
+  marketCap: number;
+  sector: string;
+  industry: string;
+  country: string;
+}
+
+export interface FinancialMetrics {
+  per: number;
+  pbr: number;
+  psr: number;
+  eps: number;
+  debtToEquity: number;
+  currentRatio: number;
+}
+
+export interface Profitability {
+  roe: number;
+  roa: number;
+  profitMargin: number;
+  operatingMargin: number;
+  ebitdaMargin: number;
+}
+
+export interface GrowthMetrics {
+  revenueGrowth: number;
+  earningsGrowth: number;
+  epsGrowth: number;
+  freeCashFlowGrowth: number;
+}
+
+export interface Valuation {
+  isUndervalued: boolean;
+  fairValue: number;
+  upside: number;
+}
+
+export interface InvestmentScore {
+  total: number;
+  breakdown: {
+    financial: number;
+    growth: number;
+    valuation: number;
+    profitability: number;
+  };
+}
+
+export interface StockAnalysis {
+  basic: BasicInfo;
+  financials: FinancialMetrics;
+  profitability: Profitability;
+  growth: GrowthMetrics;
+  valuation: Valuation;
+  investmentScore: InvestmentScore;
+  recommendation: InvestmentRecommendation;
+  reasons: string[];
+  lastUpdated: string;
+}
+
 export interface StockData {
   symbol: string;
   name: string;
@@ -123,6 +194,14 @@ export const etfApi = {
   // 특정 종목의 상세 정보 조회
   getStockData: async (symbol: string): Promise<ApiResponse<StockData>> => {
     const response = await api.get(`/etf/stock/${symbol}`);
+    return response.data;
+  },
+};
+
+export const stockApi = {
+  // 주식 상세 분석 조회
+  getStockAnalysis: async (symbol: string): Promise<ApiResponse<StockAnalysis>> => {
+    const response = await api.get(`/stock/${symbol}/analysis`);
     return response.data;
   },
 };
