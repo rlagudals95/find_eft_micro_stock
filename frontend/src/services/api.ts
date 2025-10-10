@@ -119,6 +119,27 @@ export interface StockAnalysis {
   lastUpdated: string;
 }
 
+// 뉴스 감성 분석 관련 타입
+export interface NewsArticle {
+  title: string;
+  source: string;
+  publishedAt: string;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  url: string;
+  summary: string;
+}
+
+export interface NewsSentiment {
+  score: number;
+  positiveRatio: number;
+  negativeRatio: number;
+  neutralRatio: number;
+  newsCount: number;
+  keywords: string[];
+  recentNews: NewsArticle[];
+  lastUpdated: string;
+}
+
 export interface StockData {
   symbol: string;
   name: string;
@@ -202,6 +223,12 @@ export const stockApi = {
   // 주식 상세 분석 조회
   getStockAnalysis: async (symbol: string): Promise<ApiResponse<StockAnalysis>> => {
     const response = await api.get(`/stock/${symbol}/analysis`);
+    return response.data;
+  },
+
+  // 뉴스 감성 분석 조회
+  getNewsSentiment: async (symbol: string): Promise<ApiResponse<NewsSentiment>> => {
+    const response = await api.get(`/stock/${symbol}/news-sentiment`);
     return response.data;
   },
 };

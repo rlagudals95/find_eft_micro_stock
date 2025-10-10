@@ -22,13 +22,14 @@ ETF 하위 보유 종목(0.1~2% 비중) 중 잠재력 있는 기업을 발굴
 
 #### 데이터 수집
 - **ETF 보유 종목 데이터**
-  - 출처: ARK Invest API, ETF.com, SEC EDGAR
-  - 수집 주기: 일 1회
-  - 대상 ETF: ARKK, IVES, GRNY, AOTG
+  - 출처: **ARK Funds API (https://arkfunds.io/api)** - 공식 API 사용 ✅
+  - 수집 주기: 일 1회 (ARK는 매일 업데이트)
+  - 대상 ETF: ARKK, ARKW, ARKG, ARKQ, ARKF, ARKX
+  - 전체 48개 종목 포함 (상위~하위 0.19%까지)
 
 - **주가 데이터**
-  - 출처: Yahoo Finance API, Alpha Vantage
-  - 실시간 가격, 거래량, 변동률
+  - 출처: Yahoo Finance API ✅
+  - 실시간 가격, 거래량, 변동률, 52주 고가/저가
 
 #### 필터링 기준
 - 보유 비중: 0.1% ~ 2%
@@ -85,15 +86,21 @@ ETF 하위 보유 종목(0.1~2% 비중) 중 잠재력 있는 기업을 발굴
   - 52주 최고가/최저가 대비 현재가
   - 베타 (시장 대비 변동성)
 
-#### 2.2.3 뉴스 및 센티먼트 분석
-**데이터 소스**: News API, Finnhub, Reddit API
+#### 2.2.3 뉴스 및 센티먼트 분석 ✅ 완료 (MVP)
+**데이터 소스**: News API (무료: 100 calls/day)
 
-- **최근 뉴스**
-  - 최근 30일 주요 뉴스 (최대 10개)
+- **최근 뉴스** ✅
+  - 최근 7일 주요 뉴스 (최대 20개)
   - 뉴스 제목, 요약, 출처, 날짜
-  - 긍정/부정/중립 분류
+  - 긍정/부정/중립 자동 분류 (키워드 기반)
 
-- **소셜 미디어 센티먼트**
+- **감성 분석** ✅
+  - 감성 점수 (-1 ~ 1)
+  - 긍정/중립/부정 비율 (%)
+  - 주요 키워드 추출
+  - 시각화: 감성 게이지, 최신 뉴스 3개 표시
+
+- **소셜 미디어 센티먼트** (향후 개발)
   - Reddit WallStreetBets 언급 횟수
   - Twitter 언급 추세
   - 전반적 센티먼트 점수 (0-100)
@@ -173,47 +180,45 @@ ETF 하위 보유 종목(0.1~2% 비중) 중 잠재력 있는 기업을 발굴
 
 ## 3. 데이터 소스 및 API
 
-### 3.1 무료 API
-1. **Yahoo Finance API** (yfinance)
-   - 주가, 거래량, 재무제표
+### 3.1 실제 사용 API (✅ 구현 완료)
+
+1. **ARK Funds API** ✅
+   - 출처: https://arkfunds.io/api
+   - GitHub: https://github.com/frefrik/ark-invest-api
    - 무료, 제한 없음
+   - **기능**: ETF 보유 종목 전체 (48개), 거래 내역, 펀드 보유 현황
+   - **데이터**: 매일 업데이트, 실시간 비중/시장가치
 
-2. **Alpha Vantage**
-   - 주가 데이터, 기술적 지표
-   - 무료: 5 calls/min, 500 calls/day
+2. **Yahoo Finance API** ✅
+   - 주가, 거래량, 기술적 지표
+   - 무료, 제한 없음
+   - **기능**: 실시간 주가, SMA, RSI, MACD 계산
 
-3. **Financial Modeling Prep**
+3. **Financial Modeling Prep** ⏳
    - 재무제표, 밸류에이션
    - 무료: 250 calls/day
+   - API 키 필요
 
-4. **Finnhub**
+4. **Finnhub** ⏳
    - 뉴스, 센티먼트, 기본 정보
    - 무료: 60 calls/min
+   - API 키 필요
 
-5. **News API**
-   - 뉴스 검색
-   - 무료: 100 calls/day
-
-### 3.2 웹 스크래핑
-1. **ARK Invest**
-   - ETF 보유 종목 (CSV 다운로드)
-   - https://ark-funds.com/funds/arkk
-
-2. **ETF.com**
-   - ETF 보유 종목 상세
-
-3. **Reddit API**
-   - WallStreetBets 언급
+### 3.2 제거된 방법
+- ~~웹 스크래핑~~ → ARK 공식 API 사용으로 대체
+- ~~Puppeteer/Playwright~~ → 불필요 (공식 API 사용)
 
 ## 4. 기술 스택
 
 ### 4.1 Backend
-- **Node.js + TypeScript + Express**
-- **Puppeteer**: 웹 스크래핑
-- **Axios**: API 호출
-- **Node-cron**: 스케줄링
-- **PostgreSQL**: 데이터 저장
-- **Redis**: 캐싱
+- **NestJS 10.3** ✅ (Express 대신)
+- **TypeScript 5.3** ✅
+- **Axios**: HTTP 클라이언트 ✅
+- **class-validator**: DTO 검증 ✅
+- **@nestjs/schedule**: 스케줄링 ✅
+- **@nestjs/swagger**: API 문서 자동 생성 ✅
+- **PostgreSQL**: 데이터 저장 & 캐싱 (TODO)
+- **Redis**: 실시간 캐싱 (TODO)
 
 ### 4.2 Frontend
 - **React + TypeScript**
@@ -292,53 +297,72 @@ ETF 하위 보유 종목(0.1~2% 비중) 중 잠재력 있는 기업을 발굴
 
 ## 7. 개발 로드맵
 
-### Phase 1: MVP (2주)
+### Phase 1: MVP (2주) ✅
 - [x] 프로젝트 설정
-- [x] ETF 데이터 수집 (Mock)
-- [ ] 실제 API 연동
-- [ ] 재무 데이터 수집
-- [ ] 기본 UI 구현
+- [x] NestJS 백엔드 구축
+- [x] ARK Funds API 연동 (48개 전체 종목)
+- [x] Yahoo Finance API 연동
+- [x] 기술적 지표 계산 (SMA, RSI, MACD)
+- [x] 기본 UI 구현 (React + Tailwind)
 
-### Phase 2: 핵심 기능 (2주)
-- [ ] 투자 점수 알고리즘
-- [ ] 뉴스 수집 및 분석
-- [ ] 기술적 지표 계산
-- [ ] 상세 분석 페이지
+### Phase 2: 핵심 기능 (2주) ✅
+- [x] 투자 점수 알고리즘 구현
+- [x] 기술적 지표 계산 (SMA, RSI, MACD)
+- [x] 재무 데이터 API 연동 (yahoo-finance2)
+- [x] 뉴스 수집 및 분석 (News API) ✨ NEW
+- [x] 상세 분석 페이지 UI
 
-### Phase 3: 고도화 (2주)
-- [ ] AI 예측 모델
-- [ ] 경쟁사 비교
+### Phase 3: 고도화 (2주) ⏳
+- [ ] 상승 가능성 예측 모델 고도화
+- [ ] DB 캐싱 (PostgreSQL + Redis)
+- [ ] 경쟁사 비교 기능
 - [ ] 알림 기능
 - [ ] 포트폴리오 추적
 
-### Phase 4: 최적화 (1주)
+### Phase 4: 최적화 & 배포 (1주) ⏳
 - [ ] 성능 최적화
-- [ ] 캐싱 전략
-- [ ] 모니터링
-- [ ] 배포
+- [ ] API 응답 캐싱
+- [ ] 모니터링 & 로깅
+- [ ] Docker 배포
 
 ## 8. 리스크 및 대응
 
 ### 8.1 기술적 리스크
-- **API 제한**: 여러 API 조합, 캐싱 전략
-- **스크래핑 차단**: User-Agent 로테이션, 프록시
-- **데이터 품질**: 검증 로직, 이상치 제거
+- **API 제한**: ✅ ARK API는 무제한, Yahoo Finance도 안정적
+- **데이터 품질**: ✅ 공식 API 사용으로 신뢰성 확보
+- **API 장애**: DB 캐싱으로 대응 (TODO)
 
 ### 8.2 비즈니스 리스크
 - **법적 문제**: 투자 조언 면책 조항
 - **데이터 정확성**: "참고용" 명시
 - **시장 변동성**: 리스크 경고 표시
 
-## 9. 다음 단계
+## 9. 구현 현황 & 다음 단계
 
-1. ✅ PRD 작성 완료
-2. 🔄 실제 API 연동 시작
-3. 🔄 재무 데이터 수집 구현
-4. ⏳ 뉴스 및 센티먼트 분석
-5. ⏳ 투자 점수 알고리즘 고도화
+### ✅ 완료
+1. PRD 작성
+2. NestJS 백엔드 구축
+3. ARK Funds API 연동 (실제 48개 종목 데이터)
+4. Yahoo Finance API 연동
+5. 투자 점수 알고리즘
+6. 기술적 지표 계산
+7. React + Tailwind UI
+
+### 🔄 진행 중
+1. 재무 데이터 수집 (Financial Modeling Prep)
+2. 뉴스 센티먼트 분석 (Finnhub)
+
+### ⏳ TODO
+1. **DB 캐싱 시스템** (우선순위 높음)
+   - PostgreSQL: 일일 데이터 저장
+   - Redis: API 응답 캐싱
+2. 프론트엔드-백엔드 완전 연동
+3. 상세 분석 페이지
+4. 배포 (Docker + AWS/Vercel)
 
 ---
 
 **작성일**: 2025-10-07  
-**버전**: 1.0  
+**최종 수정**: 2025-10-07 15:15  
+**버전**: 2.0  
 **작성자**: AI Development Team

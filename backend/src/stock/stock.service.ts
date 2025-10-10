@@ -1,19 +1,27 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import yahooFinance from 'yahoo-finance2';
+import { NewsSentimentDto } from './dto/news-sentiment.dto';
 import {
-    BasicInfoDto,
-    FinancialMetricsDto,
-    GrowthMetricsDto,
-    InvestmentRecommendation,
-    InvestmentScoreDto,
-    ProfitabilityDto,
-    StockAnalysisDto,
-    ValuationDto,
+  BasicInfoDto,
+  FinancialMetricsDto,
+  GrowthMetricsDto,
+  InvestmentRecommendation,
+  InvestmentScoreDto,
+  ProfitabilityDto,
+  StockAnalysisDto,
+  ValuationDto,
 } from './dto/stock-analysis.dto';
+import { FinnhubNewsService } from './services/finnhub-news.service';
+import { NewsSentimentService } from './services/news-sentiment.service';
 
 @Injectable()
 export class StockService {
   private readonly logger = new Logger(StockService.name);
+
+  constructor(
+    private readonly newsSentimentService: NewsSentimentService,
+    private readonly finnhubNewsService: FinnhubNewsService,
+  ) {}
 
   async getStockAnalysis(symbol: string): Promise<StockAnalysisDto> {
     try {
@@ -325,7 +333,20 @@ export class StockService {
       reasons.push('추가 분석이 필요합니다');
     }
 
-    return { recommendation, reasons };
+      return { recommendation, reasons };
+  }
+
+  async getNewsSentiment(symbol: string): Promise<NewsSentimentDto> {
+    try {
+      this.logger.log(`Fetching news sentiment for ${symbol}...`);
+
+  
+      return await this.finnhubNewsService.getNewsSentiment(symbol);
+    
+    } catch (error) {
+      this.logger.error(`Error fetching news sentiment for ${symbol}:`, error);
+      throw error;
+    }
   }
 }
 

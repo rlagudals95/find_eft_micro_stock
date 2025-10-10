@@ -2,7 +2,9 @@ import { Activity, ArrowLeft, BarChart3, DollarSign, PieChart, TrendingUp } from
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import NewsSentimentSection from '../components/NewsSentimentSection';
 import { STOCK_TERMS, Tooltip } from '../components/Tooltip';
+import { useNewsSentiment } from '../hooks/useNewsSentiment';
 import { useStockAnalysis } from '../hooks/useStockAnalysis';
 import { InvestmentRecommendation } from '../services/api';
 
@@ -12,6 +14,7 @@ export const StockDetail: React.FC = () => {
   
   // React Query로 데이터 가져오기 (자동 캐싱)
   const { data: analysis, isLoading, isError, error, refetch } = useStockAnalysis(symbol || '');
+  const { data: newsSentiment, isLoading: isNewsSentimentLoading } = useNewsSentiment(symbol || '');
 
   const getRecommendationColor = (recommendation: InvestmentRecommendation) => {
     switch (recommendation) {
@@ -350,6 +353,14 @@ export const StockDetail: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* 뉴스 감성 분석 */}
+        {newsSentiment && (
+          <NewsSentimentSection 
+            sentiment={newsSentiment} 
+            isLoading={isNewsSentimentLoading}
+          />
+        )}
 
         {/* 면책 조항 */}
         <div className="card bg-yellow-50 border-l-4 border-yellow-400">
